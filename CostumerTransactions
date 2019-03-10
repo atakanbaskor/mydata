@@ -1,0 +1,58 @@
+
+#we read the CustomerTransactions data.
+getwd() 
+setwd("C:/Users/Atakan/Downloads/CustomerTransactions.csv")
+cus_trans<-read.csv("C:/Users/Atakan/Downloads/CustomerTransactions.csv",header=T)
+
+
+#we can see here that data shows us top six rows.
+head(cus_trans)
+
+#Data has one hundred obs. and thirty four attributes
+attributes(cus_trans)
+
+#Remove the top 2 columns of dataset that it has nonnumerical data in there.
+cus_trans_2<-cus_trans[,3:34]
+
+#we can see here that we tried the silhoulette method to find best k score.
+#As a result. We found that the best k score is four.
+silhouette_score <- function(k){
+  km <- kmeans(cus_trans_2, centers = k, nstart=15)
+  ss <- silhouette(km$cluster, dist(cus_trans_2))
+  mean(ss[, 3])
+}
+k <- 2:6
+avg_sil <- sapply(k, silhouette_score)
+plot(k, type='b', avg_sil, xlab='Number of clusters', ylab='Average Silhouette Scores', frame=FALSE)
+
+#model fitting of k-means clustering. with the k-means which has been found.
+model <- kmeans(cus_trans_2, 4)
+summary(model)
+
+attributes(model) 
+model$cluster
+model$size
+
+#we assinged that cluster number of the model to the original data 
+cus_trans_2<-cbind(cus_trans_2,Cluster=model$cluster)
+model$withinss
+
+
+#pattern of the cluster data
+clusplot(cus_trans_2[-1], model$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,
+         labels=2, lines=0)
+
+#we can see here that as the zero mach more than as one
+table(cus_trans_2[,1],model$cluster)
+
+asd <- dist(cus_trans_2[-1], method = "euclidean") 
+H_Model <- hclust(asd, method="ward.D")
+
+plot(H_Model) 
+grodata <- cutree(H_Model, k=4)
+table(cus_trans_2[,1],grodata)
+
+# draw dendogram with red borders around the 4 clusters
+rect.hclust(H_Model, k=4, border="BLUE") 
+
